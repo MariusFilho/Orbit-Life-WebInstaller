@@ -1,0 +1,13 @@
+{
+  "name": "Orbit-Life",
+  "version": "0.2.0",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "orbit-life-knob.bin", "offset": 0 }
+      ]
+    }
+  ]
+}
