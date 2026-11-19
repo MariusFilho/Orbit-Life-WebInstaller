@@ -103,6 +103,16 @@
       const chip = await loader.main();
       if (!String(chip).includes("ESP32-S3")) throw new Error(`Chip detectado: ${chip}. Esperado ESP32-S3 (vire o conector USB-C).`);
 
+      if (!loader.IS_STUB) {
+        // Igual ao esptool.py: a ROM so liga a flash se pedirmos (SPI_ATTACH, 8 bytes: hspi_arg + is_legacy)
+        // e precisa saber o tamanho dela (SPI_SET_PARAMS). O esptool-js pula isso no Secure Download Mode.
+        log("Enabling default SPI flash mode...\n");
+        await loader.checkCommand("configure SPI flash pins", loader.ESP_SPI_ATTACH, new Uint8Array(8));
+        const p = new DataView(new ArrayBuffer(24));
+        [0, 16 * 1024 * 1024, 64 * 1024, 4 * 1024, 256, 0xffff].forEach((v, i) => p.setUint32(i * 4, v, true));
+        await loader.checkCommand("set SPI params", 0x0b, new Uint8Array(p.buffer));
+      }
+
       setStatus("Gravando...");
       setProgress(0);
       await loader.writeFlash({
