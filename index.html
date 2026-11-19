@@ -111,6 +111,9 @@
         const p = new DataView(new ArrayBuffer(24));
         [0, 16 * 1024 * 1024, 64 * 1024, 4 * 1024, 256, 0xffff].forEach((v, i) => p.setUint32(i * 4, v, true));
         await loader.checkCommand("set SPI params", 0x0b, new Uint8Array(p.buffer));
+        // Sem stub quem grava e a ROM, que so aceita blocos de 1 KB (o esptool-js deixa 16 KB, tamanho do stub).
+        loader.FLASH_WRITE_SIZE = loader.chip.FLASH_WRITE_SIZE || 0x400;
+        log(`Block size: 0x${loader.FLASH_WRITE_SIZE.toString(16)}\n`);
       }
 
       setStatus("Gravando...");
