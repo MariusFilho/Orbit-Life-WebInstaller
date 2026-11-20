@@ -44,6 +44,7 @@
     .panel { display:grid; gap:20px; }
     h1 { margin:0; font-size:clamp(30px,5vw,42px); letter-spacing:.2em; line-height:1.1; }
     h1 small { display:block; margin-top:10px; font-size:15px; letter-spacing:.04em; font-weight:500; color:var(--muted); }
+    #fwver { margin:6px 0 0; font-size:13px; color:var(--muted); letter-spacing:.04em; }
     .lead { margin:0; color:#c3cbdb; font-size:15.5px; }
     .chips { display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; list-style:none; }
     .chips li { font-size:12.5px; padding:5px 12px; border-radius:999px; border:1px solid var(--line); background:#0b1120; color:#b7c1d6; }
@@ -103,6 +104,7 @@
 
     <main class="panel">
       <h1>ORBIT-LIFE<small>Contador de vida para o Waveshare ESP32-S3 Knob 1,8"</small></h1>
+      <p id="fwver" class="sub"></p>
       <p class="lead">Um contador para jogos de cartas e de mesa, pensado para o knob e para a tela redonda:
         de 1 a 4 jogadores, com visual próprio para Star Wars: Unlimited, Lorcana, Magic e Commander.</p>
       <ul class="chips">
@@ -158,6 +160,10 @@
     $("ring").style.setProperty("--p", pct);
     $("ringtxt").textContent = pct + "%";
   };
+
+  fetch("version.json", { cache: "no-cache" }).then(r => r.ok ? r.json() : null).then(v => {
+    if (v) $("fwver").textContent = `Firmware v${v.version} · build ${v.date}`;
+  }).catch(() => {});
 
   if (!("serial" in navigator)) {
     btn.disabled = true;
