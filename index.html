@@ -3,68 +3,143 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070b14">
   <title>Orbit-Life · Instalador Web</title>
   <style>
-    :root { --bg:#070b16; --card:#0f1526; --txt:#e8ecf5; --muted:#8a93a8; --a:#2fa8ff; --b:#ff8a1f; --ok:#3ddc84; --err:#ff5c5c; }
-    * { box-sizing: border-box; }
-    body { margin:0; min-height:100vh; display:grid; place-items:center; padding:24px 16px;
-           font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-           background: radial-gradient(circle at 50% 20%, #13203d 0%, var(--bg) 60%); color:var(--txt); }
-    main { width:100%; max-width:520px; background:var(--card); border:1px solid #1d2742;
-           border-radius:24px; padding:36px 28px; text-align:center; }
-    .ring { width:120px; height:120px; margin:0 auto 20px; border-radius:50%;
-            background: conic-gradient(var(--a) 0 var(--p, 62%), #1b2440 var(--p, 62%) 100%);
-            display:grid; place-items:center; }
-    .ring span { width:92px; height:92px; border-radius:50%; background:var(--card);
-                 display:grid; place-items:center; font-size:34px; font-weight:700; }
-    h1 { margin:0 0 4px; letter-spacing:6px; font-size:28px; }
-    p.sub { margin:0 0 28px; color:var(--muted); }
-    ol { text-align:left; color:var(--muted); line-height:1.7; padding-left:22px; margin:0 0 28px; }
-    ol b { color:var(--txt); }
-    button#install {
-      background: linear-gradient(90deg, var(--a), #6f7bff); color:#fff; border:0; border-radius:999px;
-      padding:14px 34px; font-size:17px; font-weight:600; cursor:pointer; }
+    /* Paleta do próprio Orbit-Life: fundo quase preto da interface + ciano do Orbi + âmbar do anel */
+    :root { --bg:#070a12; --bg2:#0d1322; --card:#0e1424; --line:#1c2640; --txt:#eaf0fa; --muted:#8c97ae;
+            --teal:#1ad1c4; --teal2:#0f8f89; --amber:#ffab1f; --violet:#9b6bff; --ok:#3ddc84; --err:#ff5c5c; }
+    * { box-sizing:border-box; }
+    html { -webkit-text-size-adjust:100%; }
+    body { margin:0; min-height:100vh; color:var(--txt); background:var(--bg);
+           font-family: Montserrat, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height:1.5; }
+    /* fundo: um único brilho suave, igual ao tom da tela do aparelho */
+    body::before { content:""; position:fixed; inset:0; z-index:-1;
+                   background: radial-gradient(60% 50% at 25% 15%, #11203a 0%, transparent 70%); }
+    .wrap { max-width:1060px; margin:0 auto; padding:32px 20px 40px; display:grid; gap:28px;
+            grid-template-columns: 1fr 1fr; align-items:center; min-height:100vh; }
+
+    /* ---------- palco: o aparelho + órbita ---------- */
+    .stage { display:grid; place-items:center; }
+    #ring { --p:0; position:relative; width:min(78vw, 400px); aspect-ratio:1; }
+    #ring svg.orbit { position:absolute; inset:0; width:100%; height:100%; overflow:visible; }
+    .orbit .track { fill:none; stroke:var(--line); stroke-width:.5; }
+    .orbit .prog { fill:none; stroke:var(--teal); stroke-width:1.7; stroke-linecap:round; opacity:0;
+                   stroke-dasharray:100 100; stroke-dashoffset:calc(100 - var(--p)); transform:rotate(-90deg); transform-origin:50% 50%;
+                   transition: stroke-dashoffset .25s ease, opacity .3s; }
+    #ring.busy .prog { opacity:1; }
+    .orbit .moon { fill:var(--violet); }
+    .spin { transform-origin:50% 50%; animation: spin 26s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .disc { position:absolute; inset:9%; border-radius:50%; display:grid; place-items:center; text-align:center;
+            background: radial-gradient(circle at 50% 38%, #101a30 0%, #080b14 72%); border:1px solid var(--line); }
+    .disc img { width:72%; height:auto; display:block; margin-top:-4%; }
+    .disc .word { position:absolute; bottom:15%; left:0; right:0; font-weight:700; letter-spacing:.34em; font-size:clamp(13px,3.4vw,19px);
+                  padding-left:.34em; }
+    #ring.busy .word { visibility:hidden; }
+    #ringtxt { position:absolute; bottom:14%; left:0; right:0; font-weight:700; font-size:clamp(18px,5vw,26px); color:var(--teal); }
+    #ring:not(.busy) #ringtxt { display:none; }
+
+    /* ---------- painel ---------- */
+    .panel { display:grid; gap:20px; }
+    h1 { margin:0; font-size:clamp(30px,5vw,42px); letter-spacing:.2em; line-height:1.1; }
+    h1 small { display:block; margin-top:10px; font-size:15px; letter-spacing:.04em; font-weight:500; color:var(--muted); }
+    .lead { margin:0; color:#c3cbdb; font-size:15.5px; }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin:0; padding:0; list-style:none; }
+    .chips li { font-size:12.5px; padding:5px 12px; border-radius:999px; border:1px solid var(--line); background:#0b1120; color:#b7c1d6; }
+    .chips li i { font-style:normal; color:var(--teal); margin-right:6px; }
+
+    .card { background:var(--card); border:1px solid var(--line); border-radius:22px; padding:22px; }
+    .steps { list-style:none; counter-reset:s; margin:0 0 20px; padding:0; display:grid; gap:14px; }
+    .steps li { counter-increment:s; position:relative; padding-left:44px; color:var(--muted); font-size:14.5px; min-height:32px; }
+    .steps li::before { content:counter(s); position:absolute; left:0; top:0; width:30px; height:30px; border-radius:50%;
+                        border:2px solid var(--teal2); color:var(--teal); display:grid; place-items:center; font-weight:700; font-size:14px; }
+    .steps b { color:var(--txt); }
+    .you { display:inline-block; margin-left:6px; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase;
+           color:#1a1203; background:var(--amber); border-radius:999px; padding:1px 8px; vertical-align:2px; }
+
+    .req { margin:0 0 20px; padding:12px 14px; border-radius:14px; background:#0a101e; border:1px dashed #263253; font-size:13.5px; color:var(--muted); }
+    .req b { color:var(--txt); }
+
+    button#install { width:100%; background:linear-gradient(90deg, var(--teal), #46a0ff); color:#04141a; border:0; border-radius:999px;
+                     padding:16px 24px; font-size:17px; font-weight:700; letter-spacing:.02em; cursor:pointer; font-family:inherit; }
+    button#install:hover:not(:disabled) { filter:brightness(1.08); }
+    button#install:focus-visible { outline:3px solid var(--amber); outline-offset:3px; }
     button#install:disabled { opacity:.5; cursor:default; }
-    #status { margin-top:18px; min-height:1.4em; font-weight:600; }
+    #status { margin-top:14px; min-height:1.5em; font-weight:600; font-size:14.5px; text-align:center; }
     #status.ok { color:var(--ok); } #status.err { color:var(--err); }
-    details { margin-top:16px; text-align:left; }
-    summary { cursor:pointer; color:var(--muted); font-size:14px; }
-    pre#log { margin:8px 0 0; max-height:220px; overflow:auto; background:#0a0f1d; border:1px solid #1d2742;
+    details { margin-top:12px; }
+    summary { cursor:pointer; color:var(--muted); font-size:13px; }
+    pre#log { margin:8px 0 0; max-height:200px; overflow:auto; background:#080d19; border:1px solid var(--line);
               border-radius:12px; padding:12px; font-size:12px; line-height:1.45; color:#b9c2d6; white-space:pre-wrap; }
-    .warn { margin-top:24px; font-size:14px; color:var(--muted); }
-    .warn b { color:var(--b); }
-    footer { margin-top:28px; font-size:12px; color:#5a6378; line-height:1.6; }
+    .warn { margin:16px 0 0; font-size:13.5px; color:var(--muted); }
+    .warn b { color:var(--amber); }
+    footer { font-size:12px; color:#5d6880; line-height:1.6; }
+
+    @media (max-width: 860px) {
+      .wrap { grid-template-columns:1fr; min-height:0; padding-top:24px; }
+      #ring { width:min(70vw, 300px); }
+      .panel { text-align:left; }
+    }
+    @media (prefers-reduced-motion: reduce) { .spin { animation:none; } .orbit .prog { transition:none; } }
   </style>
 </head>
 <body>
-  <main>
-    <div class="ring" id="ring"><span id="ringtxt">30</span></div>
-    <h1>ORBIT-LIFE</h1>
-    <p class="sub">Contador de vida para Waveshare ESP32-S3 Knob 1.8"</p>
+  <div class="wrap">
+    <div class="stage">
+      <div id="ring" aria-label="Progresso da instalação">
+        <svg class="orbit" viewBox="0 0 100 100" aria-hidden="true">
+          <circle class="track" cx="50" cy="50" r="48.5"/>
+          <circle class="prog" cx="50" cy="50" r="48.5" pathLength="100"/>
+          <g class="spin"><circle class="moon" cx="50" cy="1.5" r="2.1"/></g>
+        </svg>
+        <div class="disc">
+          <img src="data:image/png;base64,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" alt="Orbi, o mascote do Orbit-Life" width="280" height="197">
+          <span id="ringtxt"></span>
+          <span class="word">ORBIT LIFE</span>
+        </div>
+      </div>
+    </div>
 
-    <ol>
-      <li>Conecte o Knob ao computador com um <b>cabo USB-C de dados</b>.</li>
-      <li>Feche o VS Code, o Arduino IDE e outras abas de instalador.</li>
-      <li>Clique em <b>Instalar</b> e escolha a porta <b>USB JTAG/serial debug unit</b>.</li>
-      <li>Aguarde a gravação terminar (cerca de 1 minuto). O Knob reinicia sozinho.</li>
-    </ol>
+    <main class="panel">
+      <h1>ORBIT-LIFE<small>Contador de vida para o Waveshare ESP32-S3 Knob 1,8"</small></h1>
+      <p class="lead">Um contador para jogos de cartas e de mesa, pensado para o knob e para a tela redonda:
+        de 1 a 4 jogadores, com visual próprio para Star Wars: Unlimited, Lorcana, Magic e Commander.</p>
+      <ul class="chips">
+        <li><i>●</i>Dados e cara ou coroa</li>
+        <li><i>●</i>Modo D&amp;D</li>
+        <li><i>●</i>Mini-jogos</li>
+        <li><i>●</i>Português, English, 日本語</li>
+      </ul>
 
-    <button id="install">Instalar Orbit-Life</button>
-    <div id="status"></div>
+      <section class="card">
+        <ol class="steps">
+          <li><b>Confira a placa.</b> O instalador é só para o <b>Waveshare ESP32-S3 Knob 1,8"</b>.</li>
+          <li><b>Conecte por USB.</b> Use um cabo USB-C <b>de dados</b> (não só de carga) e feche o VS Code, o Arduino IDE e outras abas de instalador.</li>
+          <li><b>Instale.</b> Clique no botão abaixo e escolha a porta <b>USB JTAG/serial debug unit</b>.<span class="you">sua ação</span></li>
+          <li><b>Comece a usar.</b> A gravação leva cerca de 1 minuto e o Knob reinicia sozinho.</li>
+        </ol>
 
-    <details id="det">
-      <summary>Detalhes da gravação</summary>
-      <pre id="log"></pre>
-    </details>
+        <p class="req"><b>Precisa de:</b> computador com <b>Chrome ou Edge</b> (o celular não consegue gravar a placa).</p>
 
-    <p class="warn"><b>Não conectou?</b> Desconecte o cabo, segure o botão <b>BOOT</b>, conecte o cabo,
-      solte o BOOT e clique em Instalar de novo. Se ainda falhar, vire o conector USB-C 180°.</p>
+        <button id="install">Instalar Orbit-Life</button>
+        <div id="status" role="status" aria-live="polite"></div>
 
-    <footer>
-      Projeto pessoal e não comercial, derivado do life-puck (Jon Tiritilli) e do Life-Puck Multi-Hardware Fork (Platinplayer23).<br>
-      Gravação feita com esptool-js (Espressif).
-    </footer>
-  </main>
+        <details id="det">
+          <summary>Detalhes da gravação</summary>
+          <pre id="log"></pre>
+        </details>
+
+        <p class="warn"><b>Não conectou?</b> Desconecte o cabo, segure o botão <b>BOOT</b>, conecte o cabo,
+          solte o BOOT e clique em Instalar de novo. Se ainda falhar, vire o conector USB-C 180°.</p>
+      </section>
+
+      <footer>
+        Projeto pessoal e não comercial, derivado do life-puck (Jon Tiritilli) e do Life-Puck Multi-Hardware Fork (Platinplayer23).<br>
+        Gravação feita com esptool-js (Espressif).
+      </footer>
+    </main>
+  </div>
 
 <script type="module">
   import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.7.1/bundle.js";
@@ -78,7 +153,11 @@
   const log = (s) => { logEl.textContent += s; logEl.scrollTop = logEl.scrollHeight; };
   const terminal = { clean() { logEl.textContent = ""; }, writeLine(d) { log(d + "\n"); }, write(d) { log(d); } };
   const setStatus = (msg, cls = "") => { statusEl.textContent = msg; statusEl.className = cls; };
-  const setProgress = (pct) => { $("ring").style.setProperty("--p", pct + "%"); $("ringtxt").textContent = pct + "%"; };
+  const setProgress = (pct) => {
+    $("ring").classList.add("busy");
+    $("ring").style.setProperty("--p", pct);
+    $("ringtxt").textContent = pct + "%";
+  };
 
   if (!("serial" in navigator)) {
     btn.disabled = true;
